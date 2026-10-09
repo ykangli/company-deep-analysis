@@ -1,7 +1,7 @@
 {
   "name": "company-deep-analysis",
   "description": "Generate a fixed-format Chinese deep-analysis report for any listed company (US / A-share / HK), driven by a 16-question buy checklist, with mandatory evidence grading and primary-source data verification.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "ykangli",
     "url": "https://github.com/ykangli"
