@@ -1,0 +1,24 @@
+# company-deep-analysis — Python dependencies
+#
+# Installed automatically: run `python scripts/bootstrap.py` (the installers do
+# this for you). Version floors are the versions this skill was tested against;
+# akshare in particular changes its function signatures between releases, so do
+# not go below the floor.
+#
+# Tested with: Python 3.13, pandas 3.0.3, requests 2.34.2, akshare 1.18.64,
+#              beautifulsoup4 4.15.0, lxml 6.1.1
+
+# HTTP for SEC EDGAR, Yahoo Finance and Eastmoney/Sina/Tencent endpoints.
+requests>=2.31
+
+# DataFrames for every statement, price and metric computation.
+# >=2.2 is required: the scripts use the newer resample aliases ("ME", "QE"),
+# which pandas <2.2 rejects.
+pandas>=2.2
+
+# Primary source for US / A-share / HK financial statements and CN/HK prices.
+akshare>=1.18.64
+
+# HTML/XML parsing for SEC filings (8-K exhibits, 10-Q, 10-K).
+beautifulsoup4>=4.12
+lxml>=5.0

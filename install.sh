@@ -24,6 +24,7 @@ REF="main"
 DEST=""
 FORCE=0
 QUIET=0
+NO_DEPS=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -33,11 +34,26 @@ while [ $# -gt 0 ]; do
     --ref)    REF="$2";    shift 2 ;;
     --dest)   DEST="$2";   shift 2 ;;
     --force)  FORCE=1;     shift ;;
+    --no-deps) NO_DEPS=1;  shift ;;
     --quiet)  QUIET=1;     shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
+
+# Pick a python that ACTUALLY runs. `command -v python3` can succeed on a
+# Microsoft Store execution alias that exits 49 with no output, so presence on
+# PATH is not enough - probe it.
+pick_python() {
+  for c in python3 python; do
+    if command -v "$c" >/dev/null 2>&1 \
+       && "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1; then
+      printf '%s' "$c"
+      return 0
+    fi
+  done
+  return 1
+}
 
 c_ok()   { printf '  \033[32m[OK]\033[0m   %s\n' "$1"; }
 c_skip() { printf '  \033[90m[skip]\033[0m %s\n' "$1"; }
@@ -147,6 +163,32 @@ for entry in "$@"; do
   count=$((count + 1))
 done
 
+# ---------------------------------------------------------------- dependencies
+deps_state="skipped"
+if [ "$NO_DEPS" != "1" ] && [ "$count" -gt 0 ]; then
+  bootstrap="$(echo "$installed" | awk '{print $1}')/scripts/bootstrap.py"
+  PY="$(pick_python || true)"
+  say ""
+  if [ -z "$PY" ]; then
+    deps_state="python not found"
+    c_warn "No usable Python 3.9+ on PATH. Install Python, then run once:"
+    printf '   python "%s"\n' "$bootstrap"
+  elif [ ! -f "$bootstrap" ]; then
+    deps_state="bootstrap.py missing"
+    c_warn "bootstrap.py not found at $bootstrap"
+  else
+    say "Preparing Python dependencies (first run may take a few minutes)..."
+    if "$PY" "$bootstrap"; then
+      deps_state="ready"
+    else
+      rc=$?
+      deps_state="failed (exit $rc)"
+      c_warn "Dependency setup failed. Retry, or use a mirror:"
+      printf '   %s "%s" --mirror\n' "$PY" "$bootstrap"
+    fi
+  fi
+fi
+
 say ""
 head "结果"
 if [ "$count" -gt 0 ]; then
@@ -155,6 +197,7 @@ if [ "$count" -gt 0 ]; then
   printf '\n 验证安装：\n'
   first="$(echo "$installed" | awk '{print $1}')"
   printf '   python "%s/scripts/preflight.py" --market us --symbol GOOGL\n' "$first"
+  printf '\n Dependencies: %s\n' "$deps_state"
   printf '\n 使用方式（对 agent 说）：\n'
   printf '   用 company-deep-analysis 分析一下 <公司名>(<代码>)\n'
 else

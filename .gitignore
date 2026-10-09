@@ -5,6 +5,10 @@ __pycache__/
 .venv/
 venv/
 
+# 自动创建的依赖环境与就绪标记（scripts/bootstrap.py）
+.company-deep-analysis/
+.cda-deps-ok
+
 # 运行时产物
 work/
 *.log

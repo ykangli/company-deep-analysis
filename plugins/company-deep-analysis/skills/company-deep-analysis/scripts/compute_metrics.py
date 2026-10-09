@@ -440,6 +440,8 @@ def main() -> int:
     args = ap.parse_args()
 
     C.setup_console()
+
+    C.require("pandas")
     oneoff = {}
     for spec in args.oneoff:
         if "=" in spec:

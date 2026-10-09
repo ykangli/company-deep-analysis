@@ -274,6 +274,8 @@ def main() -> int:
     args = ap.parse_args()
 
     C.setup_console()
+
+    C.require("requests", "bs4")
     C.head(f"FETCH PRIMARY SOURCES  {args.market.upper()} / "
            f"{args.symbol or args.cik}")
     out = C.Out(args.out)

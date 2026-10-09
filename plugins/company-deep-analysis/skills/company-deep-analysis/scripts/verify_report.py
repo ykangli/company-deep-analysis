@@ -3,8 +3,12 @@
 """Phase 6: BLOCKING verification of a finished report.
 
 Usage:
-    python verify_report.py --report report.md --checklist "D:\\...\\checklist.md" \\
-        --work ./work --market us
+    python verify_report.py --report report.md --work ./work --market us
+
+    # the checklist is bundled with the skill and is used by default:
+    #   references/00-buy-checklist.md
+    # override it only if you analyse against a different checklist:
+    python verify_report.py --report report.md --checklist "path/to/checklist.md"
 
 Exit codes:
     0 = clean (warnings may still be printed)
@@ -29,7 +33,14 @@ import os
 import re
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+SKILL_ROOT = os.path.dirname(HERE)
+
+# The canonical checklist ships inside the skill, so a fresh install can verify
+# reports with no external file. Users may override with --checklist.
+DEFAULT_CHECKLIST = os.path.join(SKILL_ROOT, "references", "00-buy-checklist.md")
+
+sys.path.insert(0, HERE)
 import _common as C  # noqa: E402
 
 REQUIRED_CHAPTERS = [
@@ -115,11 +126,24 @@ def check_checklist(text: str, checklist_path, r: Result):
         r.warn("E2", f"只有 {verdicts} 处 '**评级：**' / '**结论：**' 标记；"
                      f"按模板每题都应有一句评级")
 
-    if checklist_path and os.path.exists(checklist_path):
+    if checklist_path:
+        if not os.path.exists(checklist_path):
+            r.err("E2", f"清单文件不存在：{checklist_path}")
+            return
         src = open(checklist_path, encoding="utf-8").read()
-        src_q = len(re.findall(r"\*\*\d{1,2}\.\s", src))
+        # The canonical checklist writes items as "- [ ] **1. text**"; a couple of
+        # items have no space after the dot, so \s* not \s.
+        src_q = len(re.findall(r"\*\*\d{1,2}\.\s*", src))
+        r.info(f"对照清单：{os.path.basename(checklist_path)}（原文 {src_q} 题）")
         if src_q and len(nums) < src_q:
-            r.warn("E2", f"清单原文含 {src_q} 题，报告只答了 {len(nums)} 题")
+            r.err("E2", f"清单原文含 {src_q} 题，报告只答了 {len(nums)} 题"
+                        f"（缺 {[i for i in range(1, src_q + 1) if i not in nums]}）")
+        expected = 16
+        if src_q != expected:
+            r.warn("E2", f"清单原文解析出 {src_q} 题，预期 {expected} 题；"
+                         f"请确认清单文件的题目格式未被改动")
+    else:
+        r.warn("E2", "未提供清单文件，已跳过与原文的题目数比对")
 
 
 def check_markers(text: str, r: Result):
@@ -230,13 +254,20 @@ def check_numbers(text: str, work: str, r: Result):
 def main() -> int:
     ap = argparse.ArgumentParser(description="Verify a finished report")
     ap.add_argument("--report", required=True)
-    ap.add_argument("--checklist", default="")
+    ap.add_argument("--checklist", default=DEFAULT_CHECKLIST,
+                    help="清单文件路径（默认使用技能内置的 references/00-buy-checklist.md）")
+    ap.add_argument("--no-checklist", action="store_true",
+                    help="跳过与清单原文的比对")
     ap.add_argument("--work", default="")
     ap.add_argument("--market", default="us", choices=["us", "cn", "hk"])
     args = ap.parse_args()
 
     C.setup_console()
     C.head(f"VERIFY REPORT  {args.report}")
+    checklist = "" if args.no_checklist else args.checklist
+    if checklist and not os.path.exists(checklist):
+        C.log(f"  [warn] 清单文件不存在，跳过题目数比对: {checklist}")
+        checklist = ""
 
     if not os.path.exists(args.report):
         C.log(f"[FATAL] report not found: {args.report}")
@@ -246,7 +277,7 @@ def main() -> int:
 
     r = Result()
     check_chapters(text, args.market, r)
-    check_checklist(text, args.checklist, r)
+    check_checklist(text, checklist, r)
     check_markers(text, r)
     check_tables(text, r)
     check_blocks(text, r)

@@ -461,6 +461,8 @@ def main() -> int:
     args = ap.parse_args()
 
     C.setup_console()
+
+    C.require("pandas", "akshare")
     C.head(f"FETCH FINANCIALS  {args.market.upper()} / {args.symbol}")
     out = C.Out(args.out)
 

@@ -29,7 +29,18 @@ Run the phases in order. Each gate must pass before the next phase starts.
 
 ### Phase 0 — Preflight (gate: data actually flows)
 
+Dependencies install themselves. The first run of any script will create a
+private virtual environment and install `requirements.txt` into it; every script
+re-enters that environment automatically, so you never need to activate anything
+and users never have to run `pip install` by hand.
+
 ```bash
+# optional: prepare the environment up front (the installers already do this)
+python scripts/bootstrap.py            # no-op when deps are already importable
+python scripts/bootstrap.py --check    # 0 = ready, 1 = missing
+python scripts/bootstrap.py --mirror   # use a China PyPI mirror
+
+# then confirm the environment and the data sources
 python scripts/preflight.py --market us --symbol GOOGL
 ```
 
@@ -39,7 +50,7 @@ To exercise the whole pipeline at once (useful after install, or after editing a
 
 ```bash
 python scripts/selftest.py --market us --symbol GOOGL --report <a-finished-report.md> \
-    --checklist <checklist.md> --oneoff 2026=135.7
+    --oneoff 2026=135.7
 ```
 
 ### Phase 1 — Scope and market routing
@@ -53,7 +64,10 @@ Read `references/04-market-adapters.md`. Decide the market, then fix the chapter
 | 6.x 名人持仓 | 13F / Form 4 | 十大股东 / 龙虎榜 | HKEX 权益披露 |
 | 6.x 内部人交易 | Form 4 | 董监高持股变动 | HKEX DI |
 
-Also read the checklist once, and the example report once. Do not start gathering data before both are read.
+Then read **`references/00-buy-checklist.md`** — the canonical 4-dimension,
+16-question buy checklist ships inside this skill, so there is no external file
+to locate. Read `assets/example-report-google-20261008.md` as well. Do not start
+gathering data before both are read.
 
 ### Phase 2 — Hard data (gate: 5 fiscal years + latest interim, reconciled)
 
@@ -102,15 +116,25 @@ Open `references/01-report-template.md` and fill it. Output path:
 
 Use `assets/example-report-google-20261008.md` as the format reference for tables, the blockquote header, the scoring table, and the price-discipline table. Match its density: this report type is table-heavy and citation-heavy by design.
 
-`references/02-checklist-mapping.md` maps every checklist question to the chapters that must supply its evidence, and states what a defensible answer looks like. **All questions must be answered** — skipping one is a failed deliverable.
+`references/02-checklist-mapping.md` maps every question in
+`references/00-buy-checklist.md` to the chapters that must supply its evidence,
+and states what a defensible answer looks like. **All 16 questions must be
+answered** — skipping one is a failed deliverable, and the verifier will block it.
 
 ### Phase 6 — Verify (gate: blocking)
 
 ```bash
-python scripts/verify_report.py --report <path> --checklist <checklist-path> --work ./work
+python scripts/verify_report.py --report <path> --work ./work
 ```
 
-Blocks delivery on: missing chapters, unanswered checklist questions, unsourced numbers, unbalanced tables, unreconciled financials, and claims asserted as fact that carry no evidence grade. Fix everything it reports and re-run until clean.
+The bundled checklist is used by default, so the verifier also compares the
+report's answered-question count against the canonical 16. Pass
+`--checklist <path>` only when analysing against a different checklist, or
+`--no-checklist` to skip that comparison.
+
+Blocks delivery on: missing chapters, unanswered checklist questions, unsourced
+numbers, unbalanced tables, unreconciled financials, and claims asserted as fact
+that carry no evidence grade. Fix everything it reports and re-run until clean.
 
 Then run the human quality gate in `assets/quality-gate.md`.
 
@@ -142,6 +166,7 @@ Fixed chapter set; see the template for the full skeleton and every table.
 | File | Load it when |
 |---|---|
 | `assets/example-report-google-20261008.md` | Always, before writing. The format contract. |
+| `references/00-buy-checklist.md` | Always. The canonical 16-question checklist (bundled). |
 | `references/01-report-template.md` | Always. The skeleton to fill. |
 | `references/02-checklist-mapping.md` | Always. Question → evidence map. |
 | `references/03-data-verification.md` | Always. The verification protocol. |
@@ -151,6 +176,7 @@ Fixed chapter set; see the template for the full skeleton and every table.
 | `references/07-evidence-grading.md` | Whenever labelling evidence; before delivery. |
 | `assets/quality-gate.md` | Phase 6, as the human pre-delivery checklist. |
 | `scripts/selftest.py` | After install or after editing any script. |
+| `scripts/bootstrap.py` | Dependencies missing, or before a first run. |
 
 ## Anti-patterns
 
@@ -165,3 +191,5 @@ Each of these was an observed failure, not a hypothetical.
 - **Filling a missing year by interpolation.** Write `未能核实`.
 - **Presenting a rumour as a deal.** Speculative supply agreements stay labelled as rumour.
 - **Delivering without running `verify_report.py`.** It catches structural omissions that are invisible while writing.
+- **Telling the user to `pip install` anything.** Run `python scripts/bootstrap.py` instead; it is idempotent and keeps the system interpreter clean.
+- **Skipping checklist questions.** All 16 are required; the verifier compares against the bundled canonical list.

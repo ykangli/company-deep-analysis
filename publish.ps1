@@ -125,9 +125,13 @@ else {
 Section "3. 必需文件与结构"
 $required = @(
     'SKILL.md',
+    'README.md',
+    'requirements.txt',
+    'scripts/bootstrap.py', 'scripts/_deps.py',
     'scripts/preflight.py', 'scripts/fetch_financials.py', 'scripts/fetch_price_dividends.py',
     'scripts/fetch_primary_source.py', 'scripts/compute_metrics.py', 'scripts/verify_report.py',
     'scripts/selftest.py', 'scripts/_common.py',
+    'references/00-buy-checklist.md',
     'references/01-report-template.md', 'references/02-checklist-mapping.md',
     'references/03-data-verification.md', 'references/04-market-adapters.md',
     'references/05-holders-insiders-officials.md', 'references/06-valuation-and-margin.md',

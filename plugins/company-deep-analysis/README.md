@@ -19,11 +19,19 @@ Claude Code 插件封装：内含 `skills/company-deep-analysis`。
 
 覆盖：近五年财报、估值与反向 DCF、近期股价、分红回购、股东结构与名人持仓（含持仓时间与成本）、内部人交易、近期大事件、高管访谈、白宫官员投资（仅美股）、未来发展三情景、投资安全边际与价格纪律。
 
-## 依赖
+## 依赖（自动安装，无需手动操作）
 
 ```bash
-pip install pandas requests akshare beautifulsoup4 lxml
+# 不需要手动装。首次运行任何脚本时，会自动创建独立虚拟环境并安装依赖：
+python ~/.dsh/skills/company-deep-analysis/scripts/bootstrap.py
+
+# 也可以手动检查 / 强制重建 / 走国内镜像
+python .../scripts/bootstrap.py --check
+python .../scripts/bootstrap.py --force
+python .../scripts/bootstrap.py --mirror
 ```
+
+依赖由 `scripts/bootstrap.py` 自动准备（安装器已代为调用），无需手动 `pip install`。
 
 首次使用建议先跑：
 

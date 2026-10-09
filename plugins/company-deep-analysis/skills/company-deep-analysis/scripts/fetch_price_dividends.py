@@ -382,6 +382,8 @@ def main() -> int:
     args = ap.parse_args()
 
     C.setup_console()
+
+    C.require("pandas", "requests", "akshare")
     C.head(f"FETCH PRICE + DIVIDENDS  {args.market.upper()} / {args.symbol}")
     out = C.Out(args.out)
 

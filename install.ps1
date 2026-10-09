@@ -37,7 +37,10 @@ param(
     [string]$Dest = '',
 
     [switch]$Force,
-    [switch]$Quiet
+    [switch]$Quiet,
+
+    # Skip the automatic Python dependency setup.
+    [switch]$NoDeps
 )
 
 $ErrorActionPreference = 'Stop'
@@ -161,6 +164,36 @@ foreach ($t in $targets) {
     }
 }
 
+# ---------------------------------------------------------------- dependencies
+$depsState = "skipped"
+if (-not $NoDeps) {
+    if ($installed.Count -eq 0) {
+        $depsState = "no target installed"
+    } else {
+        $bootstrap = Join-Path $installed[0] 'scripts\bootstrap.py'
+        $py = Get-UsablePython
+        if (-not $py) {
+            $depsState = "python not found"
+            Say ""
+            Warn "Python was not found on PATH. Install Python 3.9+ and run this once:"
+            Say  "   python `"$bootstrap`""
+        } elseif (-not (Test-Path $bootstrap)) {
+            $depsState = "bootstrap.py missing"
+            Warn "bootstrap.py not found at $bootstrap"
+        } else {
+            Say ""
+            Say "Preparing Python dependencies (first run may take a few minutes)..."
+            & $py.Source $bootstrap
+            if ($LASTEXITCODE -eq 0) { $depsState = "ready" }
+            else {
+                $depsState = "failed (exit $LASTEXITCODE)"
+                Warn "Dependency setup failed. Retry, or use a mirror:"
+                Say  "   $($py.Source) `"$bootstrap`" --mirror"
+            }
+        }
+    }
+}
+
 Say ""
 Say "=============================================================="
 if ($installed.Count -gt 0) {
@@ -169,6 +202,8 @@ if ($installed.Count -gt 0) {
     Say ""
     Say " Verify the install:"
     Say "   python `"$($installed[0])\scripts\preflight.py`" --market us --symbol GOOGL"
+    Say ""
+    Say " Dependencies: $depsState"
     Say ""
     Say " Then ask your agent:"
     Say "   Use company-deep-analysis to analyse <company> (<ticker>)"

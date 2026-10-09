@@ -134,6 +134,8 @@ def main() -> int:
     args = ap.parse_args()
 
     C.setup_console()
+
+    C.require("requests", "pandas", "akshare")
     C.head("PREFLIGHT - environment and data reachability")
 
     C.log("Environment")

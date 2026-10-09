@@ -105,10 +105,18 @@ git clone --depth 1 https://github.com/ykangli/company-deep-analysis.git
 ## 依赖
 
 ```bash
-pip install pandas requests akshare beautifulsoup4 lxml
+# 不需要手动装。首次运行任何脚本时，会自动创建独立虚拟环境并安装依赖：
+python ~/.dsh/skills/company-deep-analysis/scripts/bootstrap.py
+
+# 也可以手动检查 / 强制重建 / 走国内镜像
+python .../scripts/bootstrap.py --check
+python .../scripts/bootstrap.py --force
+python .../scripts/bootstrap.py --mirror
 ```
 
-Python ≥ 3.9。**装完先自检**：
+**依赖是自动的**：`install.ps1` / `install.sh` 装完 skill 后会立刻调用 `bootstrap.py`，它会在 `~/.company-deep-analysis/.venv`（Windows 为 `%LOCALAPPDATA%\company-deep-analysis\.venv`）建一个**独立虚拟环境**并安装 `requirements.txt`，然后写下就绪标记。之后无论你用哪个 `python` 调用脚本，脚本都会**自动重入**该虚拟环境——不需要 activate，也不会污染系统 Python。若当前解释器已经具备全部依赖，则整个步骤自动跳过，不创建任何 venv。
+
+只需 Python ≥ 3.9；**装完先自检**：
 
 ```bash
 python ~/.dsh/skills/company-deep-analysis/scripts/preflight.py --market us --symbol GOOGL
@@ -131,19 +139,20 @@ Agent 会按 Phase 0→7 执行：预检 → 读清单与范例 → 抓一手披
 ```bash
 S=~/.dsh/skills/company-deep-analysis/scripts
 
+python $S/bootstrap.py                                  # 依赖（幂等，已就绪则跳过）
 python $S/preflight.py               --market us --symbol GOOGL
 python $S/fetch_financials.py        --market us --symbol GOOGL --out ./work
 python $S/fetch_price_dividends.py   --market us --symbol GOOGL --out ./work
 python $S/fetch_primary_source.py    --market us --symbol GOOGL --out ./work \
        --since 2026-01-01 --grep "Anthropic" "backlog"
 python $S/compute_metrics.py         --work ./work --price 350.91 --shares 12.23e9
-python $S/verify_report.py           --report ./报告.md --checklist ./checklist.md --work ./work
+python $S/verify_report.py           --report ./报告.md --work ./work
 ```
 
 一键跑完整链路：
 
 ```bash
-python $S/selftest.py --market us --symbol GOOGL --report ./报告.md --checklist ./checklist.md
+python $S/selftest.py --market us --symbol GOOGL --report ./报告.md
 ```
 
 ---
@@ -159,8 +168,10 @@ company-deep-analysis/
 │       ├── README.md
 │       └── skills/company-deep-analysis/    # ← skill 本体
 │           ├── SKILL.md                     # 主入口：铁律 + Phase 0-7 + 反模式
-│           ├── references/                  # 7 份方法论（模板/清单/校验/市场/持仓/估值/证据）
-│           ├── scripts/                     # 8 个脚本（预检/财报/行情/一手/指标/校验/自检/共用）
+│           ├── requirements.txt             # Python 依赖（bootstrap.py 自动安装）
+│           ├── references/                  # 8 份方法论（清单/模板/校验/市场/持仓/估值/证据…）
+│           │   └── 00-buy-checklist.md      # ★ 买入检查清单原文（四维度 16 题）
+│           ├── scripts/                     # 10 个脚本（依赖/预检/财报/行情/一手/指标/校验/自检/共用）
 │           └── assets/                      # 范例报告 + 人工质量门
 ├── install.ps1 / install.sh                 # 通用一键安装
 ├── publish.ps1 / publish.sh                 # 发布前校验 + 占位符替换 + git 初始化

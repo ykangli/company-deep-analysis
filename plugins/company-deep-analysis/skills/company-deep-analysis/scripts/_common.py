@@ -9,6 +9,67 @@ import sys
 import time
 import datetime as dt
 
+# ---------------------------------------------------------------- dependencies
+#
+# Importing this module hands the process over to the skill's managed virtual
+# environment when one exists (created by bootstrap.py). Every script imports
+# _common before touching pandas/akshare, so a user can invoke any script with
+# ANY python on PATH and still end up in the environment that has the deps.
+#
+# _deps has no side effects and imports only the standard library, so this is
+# safe even when no venv exists yet.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import _deps as _D
+except Exception:                                    # pragma: no cover
+    _D = None
+else:
+    _D.reexec_into_venv()
+
+
+def require(*modules: str) -> None:
+    """Exit with an actionable message when a third-party import is missing."""
+    import importlib
+    missing = []
+    for name in modules:
+        try:
+            importlib.import_module(name)
+        except Exception:
+            missing.append(name)
+    if not missing:
+        return
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    root = os.path.dirname(here)
+    log("")
+    log("=" * 78)
+    log("缺少 Python 依赖：" + ", ".join(missing))
+    log("=" * 78)
+    log("")
+    log("  一次性安装依赖（推荐：自动建独立虚拟环境，不污染系统 Python）")
+    log(f'      python "{os.path.join(here, "bootstrap.py")}"')
+    log("")
+    log("  国内网络较慢时：")
+    log(f'      python "{os.path.join(here, "bootstrap.py")}" --mirror')
+    log("")
+    log("  若你更愿意自己管理依赖：")
+    log(f'      pip install -r "{os.path.join(root, "requirements.txt")}"')
+    log("")
+    raise SystemExit(3)
+
+
+def dependency_report() -> str:
+    """One-line description of the current dependency environment."""
+    if _D is None:
+        return "无法加载 _deps.py（技能目录不完整？）"
+    venv = _D.active_venv()
+    missing = _D.missing_packages()
+    where = venv if (venv and _D.running_in(venv)) else sys.executable
+    if missing:
+        return f"缺少 {', '.join(missing)}   [解释器 {where}]"
+    return f"齐全                [解释器 {where}]"
+
+
 # ---------------------------------------------------------------- console
 
 def setup_console() -> None:

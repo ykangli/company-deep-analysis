@@ -19,6 +19,7 @@
 | 能力 | 落在哪里 |
 |------|---------|
 | 格式统一 | `references/01-report-template.md` + `assets/example-report-google-20261008.md` |
+| **买入检查清单（内置）** | `references/00-buy-checklist.md` —— 16 题原文随技能分发 |
 | **数据真实性校验** | `references/03-data-verification.md`、`references/07-evidence-grading.md`、`scripts/verify_report.py` |
 | 公司近期大事件 | 报告第七章；`SKILL.md` Phase 4 |
 | 高管访谈 | 报告 7.5 节（**必须含 CEO 与 CFO 原话**） |
@@ -26,7 +27,7 @@
 | **公司高管自己投资** | 报告 6.x；`references/05-...md` 第二部分 |
 | 近期股价情况 | 报告第四章；`scripts/fetch_price_dividends.py` |
 | **名人持仓（持仓时间 + 成本）** | 报告 6.x；`references/05-...md` 第一部分 |
-| 检查清单 16 问逐条作答 | 报告第九章；`references/02-checklist-mapping.md` |
+| 检查清单 16 问逐条作答 | 报告第九章；清单原文 `references/00-buy-checklist.md` + 作答指引 `references/02-checklist-mapping.md` |
 | 未来发展分析 | 报告第十章（驱动 / 风险 / 三情景 / 观察窗口） |
 | 投资安全边际 | 报告第十一、十二章（评分表 + 价格纪律表） |
 
@@ -63,9 +64,15 @@ cp -r company-deep-analysis .codex/skills/
 ### 其他约定目录
 部分工具会扫描 `~/.agents/skills/`、`.agents/skills/`。若不确定你的 Agent 扫哪里，**直接把路径写进它的规则文件**最稳。
 
-### 依赖
+### 依赖（自动安装）
 ```bash
-pip install pandas requests akshare beautifulsoup4 lxml
+# 不需要手动装。首次运行任何脚本时，会自动创建独立虚拟环境并安装依赖：
+python ~/.dsh/skills/company-deep-analysis/scripts/bootstrap.py
+
+# 也可以手动检查 / 强制重建 / 走国内镜像
+python .../scripts/bootstrap.py --check
+python .../scripts/bootstrap.py --force
+python .../scripts/bootstrap.py --mirror
 ```
 Python ≥ 3.9。先跑预检：
 
@@ -108,8 +115,7 @@ python scripts/compute_metrics.py --work ./work --price 350.91 --shares 12.23e9 
 
 # 6) 校验（有 error 必须修完再交付）
 python scripts/verify_report.py --report ./公司_代码_深度分析报告_YYYYMMDD.md \
-    --checklist "D:\investment\checklist\买入检查清单checklist.md" \
-    --work ./work --market us
+        --work ./work --market us
 ```
 
 ### 市场参数
@@ -128,7 +134,9 @@ python scripts/verify_report.py --report ./公司_代码_深度分析报告_YYYY
 company-deep-analysis/
 ├── SKILL.md                                   # 主入口：铁律 + Phase 0-7 工作流 + 反模式
 ├── README.md                                  # 本文件
+├── requirements.txt                           # Python 依赖（bootstrap.py 自动安装）
 ├── references/
+│   ├── 00-buy-checklist.md                    # ★ 买入检查清单原文（四维度 16 题）
 │   ├── 01-report-template.md                  # 报告骨架（写作契约）
 │   ├── 02-checklist-mapping.md                # 清单 16 问 → 证据 → 合格答案
 │   ├── 03-data-verification.md                # 数据真实性校验协议（强制）
@@ -137,13 +145,16 @@ company-deep-analysis/
 │   ├── 06-valuation-and-margin.md             # 核心利润、估值、情景、安全边际
 │   └── 07-evidence-grading.md                 # 证据分级 + 12 条标题陷阱
 ├── scripts/
+│   ├── bootstrap.py                           # 依赖自动安装（建 venv，幂等）
+│   ├── _deps.py                               # 依赖解析 + 虚拟环境定位
 │   ├── preflight.py                           # Phase 0 环境与数据通路预检
 │   ├── fetch_financials.py                    # Phase 2a 三大报表（us/cn/hk）
 │   ├── fetch_price_dividends.py               # Phase 2b 行情/分红/收益统计
 │   ├── fetch_primary_source.py                # Phase 2c 一手披露 + 反查 grep
 │   ├── compute_metrics.py                     # Phase 3 指标计算 + 加总校验
 │   ├── verify_report.py                       # Phase 6 阻断式校验（22 类检查）
-│   └── _common.py                             # 共用：重试、多源回退、对账
+│   ├── selftest.py                            # 端到端自检
+│   └── _common.py                             # 共用：依赖重入、重试、多源回退、对账
 └── assets/
     ├── example-report-google-20261008.md      # 范例报告（格式契约）
     └── quality-gate.md                        # 人工交付前检查表
