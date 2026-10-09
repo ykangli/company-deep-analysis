@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "company-deep-analysis",
+  "description": "A reusable skill pack that turns a listed company (US / A-share / HK) into a fixed-format Chinese deep-analysis report with source-graded, verifiable data.",
+  "owner": {
+    "name": "ykangli",
+    "url": "https://github.com/ykangli"
+  },
+  "plugins": [
+    {
+      "name": "company-deep-analysis",
+      "description": "Generate a 12-chapter 深度分析报告 for any listed company: fundamentals, valuation, famous-investor holdings with cost basis, insider trading, shareholder structure, recent events, executive interviews, future outlook and margin of safety. Enforces evidence grading, primary-source verification of every load-bearing number, and a blocking self-check before delivery.",
+      "category": "research",
+      "source": "./plugins/company-deep-analysis",
+      "homepage": "https://github.com/ykangli/company-deep-analysis",
+      "tags": ["investment", "research", "fundamentals", "valuation", "finance"]
+    }
+  ]
+}

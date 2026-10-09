@@ -1,0 +1,42 @@
+# Normalise line endings so the repo behaves identically on every platform.
+#
+# Why this matters here: with the Windows default core.autocrlf=true, shell
+# scripts get CRLF in the working tree, and bash then fails with
+# "bad interpreter" or stray \r errors. Forcing eol=lf for *.sh makes
+# ./install.sh and ./publish.sh work in Git Bash, WSL and Linux alike.
+#
+# The repository stores LF for all text; git converts on checkout only where
+# explicitly requested below.
+
+* text=auto
+
+# Shell scripts MUST be LF everywhere.
+*.sh      text eol=lf
+*.bash    text eol=lf
+
+# Python: LF. PowerShell: CRLF (Windows-native tooling and editors expect it).
+*.py      text eol=lf
+*.ps1     text eol=crlf
+*.psm1    text eol=crlf
+
+# Docs, data and config: LF.
+*.md      text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.toml    text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+LICENSE       text eol=lf
+
+# Binary safety.
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.zip     binary
+*.pdf     binary
+
+# Keep diffs readable in review.
+*.md      diff=markdown
