@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 运行时产物
+work/
+*.log
+_*.txt
+probe_*
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 生成的报告（留在本地，不进仓库）
+*_深度分析报告_*.md
+!plugins/company-deep-analysis/skills/company-deep-analysis/assets/example-report-*.md
